@@ -1,0 +1,32 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node_modules/.bin/nuxt build",
+    "dev": "node_modules/.bin/nuxt dev",
+    "generate": "node_modules/.bin/nuxt generate",
+    "preview": "node_modules/.bin/nuxt preview",
+    "postinstall": "node_modules/.bin/nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/eslint": "1.2.0",
+    "@popperjs/core": "^2.11.8",
+    "@quasar/extras": "^1.16.17",
+    "eslint": "^9.0.0",
+    "lodash-es": "^4.17.21",
+    "nuxt": "^3.16.0",
+    "nuxt-quasar-ui": "2.1.12",
+    "ol": "10.4.0",
+    "quasar": "^2.18.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  }
+}
