@@ -8,7 +8,7 @@ import type BaseLayer from 'ol/layer/Base'
 
 const props = defineProps({
   layer: { type: Object as PropType<Layer>, required: true },
-  zIndex: { type: [String, Number], default: 0 },
+  zIndex: { type: [String, Number], default: 1},
   visible: { type: Boolean, default: true }
 })
 const layer = toRefs(props).layer
@@ -35,7 +35,6 @@ useOlMap(
   (map) => unmount(map, toValue(layer))
 )
 
-
 watch(
   () => props.visible,
   (v) => props.layer?.setVisible(v)
@@ -44,7 +43,6 @@ watch(
   () => props.zIndex,
   (v) => props.layer?.setZIndex(toNumber(v))
 )
-
 </script>
 
 <template>

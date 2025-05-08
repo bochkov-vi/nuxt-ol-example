@@ -47,7 +47,7 @@ watch(() => props.coordinate, updatePopper)
     <ol-overlay :coordinate="coordinate">
       <div ref="anchor" class="anchor" />
     </ol-overlay>
-    <div id="tooltip" ref="tooltip" v-bind="$attrs">
+    <div v-if="coordinate" id="tooltip" ref="tooltip" v-bind="$attrs">
       <div v-show="arrow" id="arrow" data-popper-arrow />
       <slot>Здесь popper tooltip</slot>
     </div>
