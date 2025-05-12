@@ -60,7 +60,7 @@ export default class MaplibreMap extends Interaction {
     const old = this.getMap()
     if (old) {
       old.removeChangeListener('target', this.onTargetChange)
-      if (this.layer) map?.removeLayer(this.layer)
+      if (this.layer) old.removeLayer(this.layer)
     }
     super.setMap(map)
     if (map) {
