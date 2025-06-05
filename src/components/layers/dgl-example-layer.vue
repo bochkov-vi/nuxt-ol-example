@@ -4,11 +4,19 @@ import { randomPoint } from '@turf/turf'
 import { GeoJsonLayer } from '@deck.gl/layers'
 import type { Feature } from 'geojson'
 import { CollisionFilterExtension } from '@deck.gl/extensions'
+import type { Color } from '@deck.gl/core'
 
 const points = randomPoint(1000000)
-points.features.forEach(
-  (f) => (f.properties.size = Math.floor(Math.random() * (30 - 10 + 1)) + 10)
-)
+const randomBetween = (min: number, max: number) =>
+  min + Math.floor(Math.random() * (max - min + 1))
+points.features.forEach((f) => {
+  f.properties.size = Math.floor(Math.random() * (30 - 10 + 1)) + 10
+  f.properties.color = [
+    randomBetween(0, 255),
+    randomBetween(0, 255),
+    randomBetween(0, 255)
+  ]
+})
 const layers = () => {
   return new GeoJsonLayer({
     id: 'random-points',
@@ -21,18 +29,14 @@ const layers = () => {
     getPointRadius: (f: Feature) => f.properties?.size,
     stroked: true,
     pointRadiusMinPixels: 5,
-    filled: false,
-    getLineColor: () => [
-      randomBetween(0, 255),
-      randomBetween(0, 255),
-      randomBetween(0, 255)
-    ],
+    filled: true,
+    getLineColor: (f) => f.properties.color as Color,
+    getFillColor: (f) => [...(f.properties.color as [number,number,number]),50],
     lineWidthMinPixels: 1,
-    extensions: [new CollisionFilterExtension()],
+    extensions: [new CollisionFilterExtension()]
   })
 }
-const randomBetween = (min: number, max: number) =>
-  min + Math.floor(Math.random() * (max - min + 1))
+
 </script>
 
 <template>

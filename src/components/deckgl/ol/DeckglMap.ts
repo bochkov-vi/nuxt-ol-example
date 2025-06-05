@@ -24,6 +24,7 @@ export default class DeckglMap extends Interaction {
     super()
     this.zIndex = options?.zIndex ?? 0
     this.deck = this.createDeck()
+    this.addEventListener('change',()=>this.layer?.changed())
   }
 
   override setMap(map: OlMap | null) {
@@ -102,7 +103,7 @@ export default class DeckglMap extends Interaction {
   }
 
   removeRenders(key?: string) {
-    this.sortedLayers = this.sortedLayers.filter((l) => l.key === key)
+    this.sortedLayers = this.sortedLayers.filter((l) => l.key !== key)
     this.changed()
   }
 
