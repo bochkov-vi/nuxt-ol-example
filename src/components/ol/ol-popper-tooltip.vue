@@ -25,17 +25,26 @@ const { olMap } = useOlMap(
 
 function updatePopper() {
   if (anchor.value && tooltip.value && olMap?.value) {
-    popper = createPopper(anchor.value, tooltip.value, {
-      placement: 'top',
-      modifiers: [
-        { name: 'offset', options: { offset: [0, 20] } },
-        {
-          name: 'preventOverflow',
-          options: { boundary: olMap?.value.getViewport() }
-        },
-        { name: 'arrow', options: { element: '#arrow' } }
-      ]
-    })
+    if (!popper) {
+      popper = createPopper(anchor.value, tooltip.value, {
+        placement: 'top',
+        modifiers: [
+          { name: 'offset', options: { offset: [0, 20] } },
+          {
+            name: 'preventOverflow',
+            options: { boundary: olMap?.value.getViewport() }
+          },
+          { name: 'arrow', options: { element: '#arrow' } }
+        ]
+      })
+    } else {
+      popper.update()
+    }
+  } else {
+    if (popper) {
+      popper.destroy()
+      popper = undefined
+    }
   }
 }
 
