@@ -3,8 +3,10 @@ import { Map as OlMap } from 'ol'
 import 'ol/ol.css'
 import { provide } from 'vue'
 
-const olMap = shallowRef(new OlMap({}))
-
+const olMap = shallowRef<OlMap>()
+onMounted(() => {
+  olMap.value = new OlMap()
+})
 provide('olMap', olMap)
 </script>
 
