@@ -12,39 +12,39 @@ const props = defineProps({
 })
 const anchor = ref<HTMLDivElement>()
 const tooltip = ref<HTMLDivElement>()
-let popper: Instance | undefined
+const popper = shallowRef<Instance | undefined>()
+
+function onRender() {
+  popper.value?.update()
+}
 
 const { olMap } = useOlMap(
-  () => {
+  (map) => {
     updatePopper()
+    map.on('postrender', onRender)
   },
-  () => {
-    popper?.destroy()
+  (map) => {
+    popper.value?.destroy()
+    popper.value = undefined
+    map.un('postrender', onRender)
   }
 )
 
 function updatePopper() {
-  if (anchor.value && tooltip.value && olMap?.value) {
-    if (!popper) {
-      popper = createPopper(anchor.value, tooltip.value, {
-        placement: 'top',
-        modifiers: [
-          { name: 'offset', options: { offset: [0, 20] } },
-          {
-            name: 'preventOverflow',
-            options: { boundary: olMap?.value.getViewport() }
-          },
-          { name: 'arrow', options: { element: '#arrow' } }
-        ]
-      })
-    } else {
-      popper.update()
-    }
-  } else {
-    if (popper) {
-      popper.destroy()
-      popper = undefined
-    }
+  if (anchor.value && tooltip.value && olMap?.value && !popper.value) {
+    popper.value = createPopper(anchor.value, tooltip.value, {
+      placement: 'top',
+      modifiers: [
+        { name: 'offset', options: { offset: [0, 20] } },
+        {
+          name: 'preventOverflow',
+          options: { boundary: olMap?.value.getViewport() }
+        },
+        { name: 'arrow', options: { element: '#arrow' } }
+      ]
+    })
+  } else if (popper.value) {
+    popper.value.update()
   }
 }
 
@@ -54,9 +54,12 @@ watch(() => props.coordinate, updatePopper)
 <template>
   <teleport to=".q-page">
     <ol-overlay :coordinate="coordinate">
-      <div ref="anchor" class="anchor" />
+      <div
+        ref="anchor"
+        class="anchor"
+      />
     </ol-overlay>
-    <div v-if="coordinate" id="tooltip" ref="tooltip" v-bind="$attrs">
+    <div v-show="popper" id="tooltip" ref="tooltip" v-bind="$attrs">
       <div v-show="arrow" id="arrow" data-popper-arrow />
       <slot>Здесь popper tooltip</slot>
     </div>

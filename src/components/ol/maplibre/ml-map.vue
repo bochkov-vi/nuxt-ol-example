@@ -3,7 +3,7 @@ import type { StyleSpecification } from 'maplibre-gl'
 import type { PropType } from 'vue'
 import { watch } from 'vue'
 import type { Map as OlMap } from 'ol'
-import MaplibreMap from '~/components/maplibre/ol/MaplibreMap'
+import MaplibreMap from '~/components/ol/maplibre/MaplibreMap'
 
 const props = defineProps({
   style: {

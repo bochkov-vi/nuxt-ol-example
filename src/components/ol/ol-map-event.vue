@@ -3,15 +3,18 @@ import { useOlLayer, useOlMap } from '#imports'
 import type { MapBrowserEvent } from 'ol'
 import type { Coordinate } from 'ol/coordinate'
 import type { FeatureLike } from 'ol/Feature'
+import { type ProjectionLike, transform } from 'ol/proj'
 
 const props = defineProps({
   handler: {
-    type: Function as PropType<
-      (evt: MapBrowserEvent<UIEvent>) => boolean | undefined
-    >,
+    type: Function as PropType<(evt: MapBrowserEvent) => boolean | undefined>,
     default: undefined
   },
-  name: { type: String as PropType<'click' | 'pointermove'>, required: true }
+  name: { type: String as PropType<'click' | 'pointermove'>, required: true },
+  projection: {
+    type: [Object, String] as PropType<ProjectionLike>,
+    default: 'EPSG:4326'
+  }
 })
 const feature = defineModel('feature', {
   type: Object as PropType<FeatureLike>
@@ -21,18 +24,16 @@ const coordinate = defineModel('coordinate', {
 })
 
 const event = defineModel('event', {
-  type: Object as PropType<MapBrowserEvent<UIEvent>>
+  type: Object as PropType<MapBrowserEvent>
 })
 const olLayer = useOlLayer()
 
-function listener(evt: MapBrowserEvent<UIEvent>) {
+function listener(evt: MapBrowserEvent) {
   let finded: FeatureLike | undefined = undefined
   evt.map.forEachFeatureAtPixel(
     evt.pixel,
     (f) => {
       finded = f
-      coordinate.value = evt.coordinate
-      event.value = evt
       if (props.handler) {
         return props.handler(evt)
       } else if (f) return true
@@ -45,7 +46,7 @@ function listener(evt: MapBrowserEvent<UIEvent>) {
   )
   if (finded) {
     feature.value = finded
-    coordinate.value = evt.coordinate
+    coordinate.value = transform(evt.coordinate, 'EPSG:3857', props.projection)
     event.value = evt
   } else {
     feature.value = undefined

@@ -1,5 +1,5 @@
 import type { Map } from 'ol'
-import DeckglMap from '~/components/deckgl/ol/DeckglMap'
+import DeckglMap from '~/components/ol/deckgl/DeckglMap'
 
 const DECK_MAP_PROP = 'deck-map'
 export default function () {
