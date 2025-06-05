@@ -24,7 +24,7 @@ export default class DeckglMap extends Interaction {
     super()
     this.zIndex = options?.zIndex ?? 0
     this.deck = this.createDeck()
-    this.addEventListener('change',()=>this.layer?.changed())
+    this.addEventListener('change', () => this.layer?.changed())
   }
 
   override setMap(map: OlMap | null) {
@@ -124,6 +124,16 @@ export default class DeckglMap extends Interaction {
 
   onClick(handler: ClickListener) {
     this.clickListeners.push(handler)
+    this.changed()
+  }
+
+  unClick(handler: ClickListener) {
+    this.clickListeners = this.clickListeners.filter((h) => h !== handler)
+    this.changed()
+  }
+
+  unHover(handler: HoverListener) {
+    this.hoverListeners = this.hoverListeners.filter((h) => h !== handler)
     this.changed()
   }
 }
