@@ -1,0 +1,12 @@
+name: nuxt-ol-example
+services:
+  nuxt-service:
+    #    stdin_open: true
+    #    network_mode: host
+    #    tty: true
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.nuxt-service
+    ports:
+      - "9000:9000"
+    entrypoint: "node /app/.output/server/index.mjs"
