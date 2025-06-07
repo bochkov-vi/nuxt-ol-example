@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { LayerGetter } from '~/components/ol/deckgl/DeckglMap'
-import useDeckgl from '~/components/ol/deckgl/use.deckgl'
+import useDeckgl, { provideDeckLayerIds } from '~/components/ol/deckgl/use.deckgl'
 import { toNumber } from 'lodash-es'
 
 const props = defineProps({
@@ -10,6 +10,7 @@ const props = defineProps({
 })
 const { deckMap } = useDeckgl()
 const keyOfRenders = ref(props.keyString)
+provideDeckLayerIds(props.layers)
 onMounted(() => {
   keyOfRenders.value = deckMap.value?.addRenders(
     props.layers,

@@ -1,20 +1,16 @@
 <script setup lang="ts">
 import type { Coordinate } from 'ol/coordinate'
-import useDeckgl from '~/components/ol/deckgl/use.deckgl'
+import useDeckgl, { type CoordinateExtractor, useProvideDeckLayerIds } from '~/components/ol/deckgl/use.deckgl'
 import type DeckglMap from '~/components/ol/deckgl/DeckglMap'
 import type { PickingInfo } from '@deck.gl/core'
 import type { MjolnirGestureEvent, MjolnirPointerEvent } from 'mjolnir.js'
 import { transform } from 'ol/proj'
 import type { Feature, GeoJsonProperties } from 'geojson'
+import { castArray, includes, some } from 'lodash-es'
 
 const props = defineProps({
   handler: {
-    type: Function as PropType<
-      (
-        evt: PickingInfo,
-        event: MjolnirGestureEvent | MjolnirPointerEvent
-      ) => boolean | undefined
-    >,
+    type: Function as PropType<(evt: PickingInfo, event: MjolnirGestureEvent | MjolnirPointerEvent) => boolean | undefined>,
     required: false,
     default: undefined
   },
@@ -24,9 +20,7 @@ const props = defineProps({
     default: undefined
   },
   toCoordinate: {
-    type: Function as PropType<
-      (o: Feature | GeoJsonProperties | unknown) => number[]
-    >,
+    type: Function as PropType<CoordinateExtractor>,
     default: undefined
   }
 })
@@ -42,12 +36,27 @@ const pick = defineModel('pick', {
 
 const { deckMap } = useDeckgl()
 const { olMap } = useOlMap()
+const providedIds = useProvideDeckLayerIds()
 
-function eventHandler(
-  info: PickingInfo,
-  event: MjolnirGestureEvent | MjolnirPointerEvent
-) {
+function clear() {
+  object.value = undefined
+  coordinate.value = undefined
+  pick.value = undefined
+}
+
+function eventHandler(info: PickingInfo, event: MjolnirGestureEvent | MjolnirPointerEvent) {
+  if (!info.picked) {
+    return clear()
+  }
+  if (props.layerId && !includes(castArray(props.layerId), info?.layer?.id)) {
+    return clear()
+  }
+  if (providedIds && !some(castArray(toValue(providedIds)), (id) => id === info?.layer?.id)) {
+    return clear()
+  }
+
   if (props.handler) props.handler(info, event)
+
   object.value = info.object
   if (info.picked && info.pixel) {
     if (props.toCoordinate) {
@@ -58,7 +67,7 @@ function eventHandler(
       else coordinate.value = undefined
     }
   } else {
-    coordinate.value = undefined
+    return clear()
   }
   pick.value = info
 }
@@ -88,7 +97,7 @@ onUnmounted(() => onDeckMapChange(undefined, deckMap.value))
 </script>
 
 <template>
-  <slot name="default" :object="object" :coordinate="coordinate" :pick="pick" />
+  <slot name="default" :object="object" :coordinate="coordinate" :pick="pick" :clear="clear" />
 </template>
 
 <style scoped></style>
