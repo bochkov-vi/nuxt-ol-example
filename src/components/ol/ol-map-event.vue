@@ -14,7 +14,9 @@ const props = defineProps({
   projection: {
     type: [Object, String] as PropType<ProjectionLike>,
     default: 'EPSG:4326'
-  }
+  },
+  maxZoom: { type: [Number, String], default: undefined },
+  minZoom: { type: [Number, String], default: undefined }
 })
 const feature = defineModel('feature', {
   type: Object as PropType<FeatureLike>
@@ -28,7 +30,23 @@ const event = defineModel('event', {
 })
 const olLayer = useOlLayer()
 
+const { isValidZoom } = useOlMap(
+  (map) => {
+    map.on(props.name, listener)
+  },
+  (map) => map.un(props.name, listener)
+)
+
+function clear() {
+  feature.value = undefined
+  coordinate.value = undefined
+  event.value = undefined
+}
+
 function listener(evt: MapBrowserEvent) {
+  if (!isValidZoom(props.minZoom, props.maxZoom)) {
+    return clear()
+  }
   let finded: FeatureLike | undefined = undefined
   evt.map.forEachFeatureAtPixel(
     evt.pixel,
@@ -49,27 +67,13 @@ function listener(evt: MapBrowserEvent) {
     coordinate.value = transform(evt.coordinate, 'EPSG:3857', props.projection)
     event.value = evt
   } else {
-    feature.value = undefined
-    coordinate.value = undefined
-    event.value = undefined
+    clear()
   }
 }
-
-useOlMap(
-  (map) => {
-    map.on(props.name, listener)
-  },
-  (map) => map.un(props.name, listener)
-)
 </script>
 
 <template>
-  <slot
-    name="default"
-    :feature="feature"
-    :coordinate="coordinate"
-    :event="event"
-  />
+  <slot name="default" :feature="feature" :coordinate="coordinate" :event="event" />
 </template>
 
 <style scoped></style>

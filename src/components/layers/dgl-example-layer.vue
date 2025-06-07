@@ -76,7 +76,7 @@ const toCoordinate = ((f: Feature<Point>) => {
         </ol-popper>
       </template>
     </dgl-map-event>
-    <dgl-map-event name="pointermove">
+    <dgl-map-event name="pointermove" min-zoom="10">
       <template #default="{ coordinate, object }">
         <ol-popper-tooltip :coordinate="coordinate"> Кружок радиусом {{ object?.['properties']?.['size'] }} </ol-popper-tooltip>
       </template>

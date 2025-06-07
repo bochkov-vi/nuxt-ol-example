@@ -22,7 +22,9 @@ const props = defineProps({
   toCoordinate: {
     type: Function as PropType<CoordinateExtractor>,
     default: undefined
-  }
+  },
+  maxZoom: { type: [Number, String], default: undefined },
+  minZoom: { type: [Number, String], default: undefined }
 })
 const object = defineModel('object', {
   type: Object as PropType<Feature | GeoJsonProperties>
@@ -35,7 +37,7 @@ const pick = defineModel('pick', {
 })
 
 const { deckMap } = useDeckgl()
-const { olMap } = useOlMap()
+const { olMap, isValidZoom } = useOlMap()
 const providedIds = useProvideDeckLayerIds()
 
 function clear() {
@@ -44,56 +46,61 @@ function clear() {
   pick.value = undefined
 }
 
-function eventHandler(info: PickingInfo, event: MjolnirGestureEvent | MjolnirPointerEvent) {
-  if (!info.picked) {
-    return clear()
-  }
-  if (props.layerId && !includes(castArray(props.layerId), info?.layer?.id)) {
-    return clear()
-  }
-  if (providedIds && !some(castArray(toValue(providedIds)), (id) => id === info?.layer?.id)) {
-    return clear()
-  }
 
-  if (props.handler) props.handler(info, event)
 
-  object.value = info.object
-  if (info.picked && info.pixel) {
-    if (props.toCoordinate) {
-      coordinate.value = props.toCoordinate(info.object)
+  function eventHandler(info: PickingInfo, event: MjolnirGestureEvent | MjolnirPointerEvent) {
+    if (!info.picked) {
+      return clear()
+    }
+    if (!isValidZoom(props.minZoom,props.maxZoom)) {
+      return clear()
+    }
+    if (props.layerId && !includes(castArray(props.layerId), info?.layer?.id)) {
+      return clear()
+    }
+    if (providedIds && !some(castArray(toValue(providedIds)), (id) => id === info?.layer?.id)) {
+      return clear()
+    }
+
+    if (props.handler) props.handler(info, event)
+
+    object.value = info.object
+    if (info.picked && info.pixel) {
+      if (props.toCoordinate) {
+        coordinate.value = props.toCoordinate(info.object)
+      } else {
+        const c = olMap?.value?.getCoordinateFromPixel(info.pixel)
+        if (c) coordinate.value = transform(c, 'EPSG:3857', 'EPSG:4326')
+        else coordinate.value = undefined
+      }
     } else {
-      const c = olMap?.value?.getCoordinateFromPixel(info.pixel)
-      if (c) coordinate.value = transform(c, 'EPSG:3857', 'EPSG:4326')
-      else coordinate.value = undefined
+      return clear()
     }
-  } else {
-    return clear()
+    pick.value = info
   }
-  pick.value = info
-}
 
-function onDeckMapChange(nv?: DeckglMap, ov?: DeckglMap) {
-  if (props.name === 'click') {
-    if (nv) {
-      nv.onClick(eventHandler)
+  function onDeckMapChange(nv?: DeckglMap, ov?: DeckglMap) {
+    if (props.name === 'click') {
+      if (nv) {
+        nv.onClick(eventHandler)
+      }
+      if (ov) {
+        ov.unClick(eventHandler)
+      }
     }
-    if (ov) {
-      ov.unClick(eventHandler)
+    if (props.name === 'pointermove') {
+      if (nv) {
+        nv.onHover(eventHandler)
+      }
+      if (ov) {
+        ov.unHover(eventHandler)
+      }
     }
   }
-  if (props.name === 'pointermove') {
-    if (nv) {
-      nv.onHover(eventHandler)
-    }
-    if (ov) {
-      ov.unHover(eventHandler)
-    }
-  }
-}
 
-watch(deckMap, onDeckMapChange)
-onMounted(() => onDeckMapChange(deckMap.value))
-onUnmounted(() => onDeckMapChange(undefined, deckMap.value))
+  watch(deckMap, onDeckMapChange)
+  onMounted(() => onDeckMapChange(deckMap.value))
+  onUnmounted(() => onDeckMapChange(undefined, deckMap.value))
 </script>
 
 <template>
