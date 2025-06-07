@@ -17,7 +17,7 @@ const layer = new Vector({
 
 <template>
   <ol-layer :layer="layer" z-index="10">
-    <ol-map-event name="pointermove">
+    <ol-map-event name="pointermove" min-zoom="4">
       <template #default="{ coordinate, event, feature }">
         <ol-popper-tooltip
           v-if="coordinate && event && feature"
