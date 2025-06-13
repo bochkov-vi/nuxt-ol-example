@@ -2,12 +2,12 @@
 import DglLayer from '~/components/ol/deckgl/dgl-layer.vue'
 import { randomPoint } from '@turf/turf'
 import { GeoJsonLayer } from '@deck.gl/layers'
-import type { Feature, Point } from 'geojson'
+import type { Feature } from 'geojson'
 import { CollisionFilterExtension } from '@deck.gl/extensions'
 import type { Color } from '@deck.gl/core'
 import DglMapEvent from '~/components/ol/deckgl/dgl-map-event.vue'
 import { mdiClose } from '@quasar/extras/mdi-v7'
-import type { CoordinateExtractor } from '~/components/ol/deckgl/use.deckgl'
+import { FROM_CENTROID } from '~/components/ol/deckgl/use.deckgl'
 
 const points = randomPoint(1000000)
 const randomBetween = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1))
@@ -35,16 +35,12 @@ const layers = () => {
     pickable: true
   })
 }
-
-const toCoordinate = ((f: Feature<Point>) => {
-  return f.geometry.coordinates
-}) as CoordinateExtractor
 </script>
 
 <template>
   <dgl-layer :layers="layers">
-    <dgl-map-event name="click" :to-coordinate="toCoordinate">
-      <template #default="{ coordinate, object, clear }">
+    <dgl-map-event name="click" :to-coordinate="FROM_CENTROID">
+      <template #default="{ coordinate, feature, clear }">
         <ol-popper :coordinate="coordinate">
           <q-card>
             <q-bar class="q-pr-none">
@@ -59,7 +55,7 @@ const toCoordinate = ((f: Feature<Point>) => {
                     <q-item-label>Размер</q-item-label>
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label>{{ object?.['properties']?.['size'] }}</q-item-label>
+                    <q-item-label>{{ feature?.['properties']?.['size'] }}</q-item-label>
                   </q-item-section>
                 </q-item>
                 <q-item>
@@ -67,7 +63,7 @@ const toCoordinate = ((f: Feature<Point>) => {
                     <q-item-label>Цвет</q-item-label>
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label>{{ object?.['properties']?.['color'] }}</q-item-label>
+                    <q-item-label>{{ feature?.['properties']?.['color'] }}</q-item-label>
                   </q-item-section>
                 </q-item>
               </q-list>
@@ -77,8 +73,8 @@ const toCoordinate = ((f: Feature<Point>) => {
       </template>
     </dgl-map-event>
     <dgl-map-event name="pointermove" min-zoom="10">
-      <template #default="{ coordinate, object }">
-        <ol-popper-tooltip :coordinate="coordinate"> Кружок радиусом {{ object?.['properties']?.['size'] }} </ol-popper-tooltip>
+      <template #default="{ coordinate, feature }">
+        <ol-popper-tooltip :coordinate="coordinate"> Кружок радиусом {{ feature?.['properties']?.['size'] }} </ol-popper-tooltip>
       </template>
     </dgl-map-event>
   </dgl-layer>

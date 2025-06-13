@@ -1,26 +1,26 @@
 <script setup lang="ts">
-import type { StyleSpecification } from 'maplibre-gl'
-import type { PropType } from 'vue'
-import { watch } from 'vue'
-import type { Map as OlMap } from 'ol'
+import type { StyleSpecification } from 'maplibre-gl';
+import type { PropType } from 'vue';
+import { watch } from 'vue';
+import { useOlMap } from '#imports';
 import MaplibreMap from '~/components/ol/maplibre/MaplibreMap'
 
 const props = defineProps({
-  style: {
+  mapStyle: {
     type: [String, Object] as PropType<string | StyleSpecification>,
-    required: true
+    required: true,
   },
-  lang: { type: String, default: () => 'ru' }
-})
-const mlInteraction = new MaplibreMap({ style: props.style })
+  lang: { type: String, default: () => 'ru' },
+});
+const mlInteraction = new MaplibreMap({ style: props.mapStyle });
 useOlMap(
-  (m: OlMap) => m.addInteraction(mlInteraction),
-  (m: OlMap) => m.removeInteraction(mlInteraction)
-)
+  (m) => m.addInteraction(mlInteraction),
+  (m) => m.removeInteraction(mlInteraction),
+);
 watch(
-  () => props.style,
-  (s) => (mlInteraction.style = s)
-)
+  () => props.mapStyle,
+  (s) => (mlInteraction.style = s),
+);
 </script>
 
 <template>
