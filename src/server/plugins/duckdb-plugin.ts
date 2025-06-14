@@ -1,7 +1,9 @@
 import { DuckDBInstance } from '@duckdb/node-api'
+import { DuckDBInstanceCache } from '@duckdb/node-api/lib/DuckDBInstanceCache'
 
 export default defineNitroPlugin(async (app) => {
-  const instance = await DuckDBInstance.create(':memory:', {
+  const cache = new DuckDBInstanceCache();
+  const instance = await cache.getOrCreateInstance('db.duckdb', {
     access_mode: 'READ_WRITE',
     max_memory: '512MB',
     threads: '4'

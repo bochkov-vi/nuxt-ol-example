@@ -10,7 +10,7 @@ import OlMap from '~/components/ol/ol-map.vue'
           <left-side />
         </q-drawer>
         <q-page>
-          <ol-view :zoom="6" />
+          <ol-view :zoom="6" :center="[160,52]" />
         </q-page>
       </ol-map>
     </q-page-container>

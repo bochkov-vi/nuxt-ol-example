@@ -1,9 +1,10 @@
-FROM node:24-alpine AS build
+FROM node:24-slim AS build
 ARG PORT=9000
 ADD . /app
 WORKDIR  /app
 RUN npm install pnpm -g
 RUN pnpm run build
+
 FROM build
 ENV PORT=$PORT
 COPY --from=build /app/.output /app/.output
