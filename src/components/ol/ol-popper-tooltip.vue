@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { Coordinate } from 'ol/coordinate'
-import type { Instance } from '@popperjs/core'
-import { createPopper } from '@popperjs/core'
+import type { Coordinate } from 'ol/coordinate';
+import type { Instance } from '@popperjs/core';
+import { createPopper } from '@popperjs/core';
+import OlOverlay from '~/components/ol/ol-overlay.vue';
 
 const props = defineProps({
   arrow: {
@@ -9,26 +10,26 @@ const props = defineProps({
     default: true
   },
   coordinate: { type: Array as PropType<Coordinate>, default: undefined }
-})
-const anchor = ref<HTMLDivElement>()
-const tooltip = ref<HTMLDivElement>()
-const popper = shallowRef<Instance | undefined>()
+});
+const anchor = ref<HTMLDivElement>();
+const tooltip = ref<HTMLDivElement>();
+const popper = shallowRef<Instance | undefined>();
 
 function onRender() {
-  popper.value?.update()
+  popper.value?.update();
 }
 
 const { olMap } = useOlMap(
   (map) => {
-    updatePopper()
-    map.on('postrender', onRender)
+    updatePopper();
+    map.on('postrender', onRender);
   },
   (map) => {
-    popper.value?.destroy()
-    popper.value = undefined
-    map.un('postrender', onRender)
+    popper.value?.destroy();
+    popper.value = undefined;
+    map.un('postrender', onRender);
   }
-)
+);
 
 function updatePopper() {
   if (anchor.value && tooltip.value && olMap?.value && !popper.value) {
@@ -42,28 +43,30 @@ function updatePopper() {
         },
         { name: 'arrow', options: { element: '#arrow' } }
       ]
-    })
+    });
   } else if (popper.value) {
-    popper.value.update()
+    popper.value.update();
   }
 }
 
-watch(() => props.coordinate, updatePopper)
+watch(() => props.coordinate, updatePopper);
 </script>
 
 <template>
-  <teleport to=".q-page">
-    <ol-overlay :coordinate="coordinate">
-      <div
-        ref="anchor"
-        class="anchor"
-      />
-    </ol-overlay>
-    <div v-show="popper" id="tooltip" ref="tooltip" v-bind="$attrs">
-      <div v-show="arrow" id="arrow" data-popper-arrow />
-      <slot>Здесь popper tooltip</slot>
-    </div>
-  </teleport>
+  <client-only>
+    <teleport to=".q-page">
+      <ol-overlay :coordinate="coordinate">
+        <div
+          ref="anchor"
+          class="anchor"
+        />
+      </ol-overlay>
+      <div v-show="popper" id="tooltip" ref="tooltip" v-bind="$attrs">
+        <div v-show="arrow" id="arrow" data-popper-arrow />
+        <slot>Здесь popper tooltip</slot>
+      </div>
+    </teleport>
+  </client-only>
 </template>
 
 <style scoped>

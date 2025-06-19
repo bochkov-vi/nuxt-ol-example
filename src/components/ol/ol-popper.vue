@@ -1,34 +1,35 @@
 <script setup lang="ts">
-import type { Coordinate } from 'ol/coordinate'
-import type { Instance } from '@popperjs/core'
-import { createPopper } from '@popperjs/core'
+import type { Coordinate } from 'ol/coordinate';
+import type { Instance } from '@popperjs/core';
+import { createPopper } from '@popperjs/core';
+import OlOverlay from '~/components/ol/ol-overlay.vue';
 
 const props = defineProps({
   arrow: {
     type: Boolean,
-    default: true
+    default: true,
   },
-  coordinate: { type: Array as PropType<Coordinate>, default: undefined }
-})
-const anchor = ref<HTMLDivElement>()
-const content = ref<HTMLDivElement>()
-const popper = shallowRef<Instance | undefined>()
+  coordinate: { type: Array as PropType<Coordinate>, default: undefined },
+});
+const anchor = ref<HTMLDivElement>();
+const content = ref<HTMLDivElement>();
+const popper = shallowRef<Instance | undefined>();
 
 function onRender() {
-  popper.value?.update()
+  popper.value?.update();
 }
 
 const { olMap } = useOlMap(
   (map) => {
-    updatePopper()
-    map.on('postrender', onRender)
+    updatePopper();
+    map.on('postrender', onRender);
   },
   (map) => {
-    popper.value?.destroy()
-    popper.value = undefined
-    map.un('postrender', onRender)
-  }
-)
+    popper.value?.destroy();
+    popper.value = undefined;
+    map.un('postrender', onRender);
+  },
+);
 
 function updatePopper() {
   if (anchor.value && content.value && olMap?.value && !popper.value) {
@@ -38,25 +39,27 @@ function updatePopper() {
         { name: 'offset', options: { offset: [0, 20] } },
         {
           name: 'preventOverflow',
-          options: { boundary: olMap?.value.getViewport() }
+          options: { boundary: olMap?.value.getViewport() },
         },
-      ]
-    })
+      ],
+    });
   } else if (popper.value) {
-    popper.value.update()
+    popper.value.update();
   }
 }
 
-watch(() => props.coordinate, updatePopper)
+watch(() => props.coordinate, updatePopper);
 </script>
 
 <template>
-  <teleport to=".q-page">
-    <ol-overlay :coordinate="coordinate">
-      <div ref="anchor" class="anchor" />
-    </ol-overlay>
-    <div v-show="popper" id="tooltip" ref="content" v-bind="$attrs">
-      <slot>Здесь popper</slot>
-    </div>
-  </teleport>
+  <client-only>
+    <teleport to=".q-page">
+      <ol-overlay :coordinate="coordinate">
+        <div ref="anchor" class="anchor" />
+      </ol-overlay>
+      <div v-show="popper" id="tooltip" ref="content" v-bind="$attrs">
+        <slot>Здесь popper</slot>
+      </div>
+    </teleport>
+  </client-only>
 </template>

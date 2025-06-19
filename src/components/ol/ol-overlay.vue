@@ -17,9 +17,14 @@ const mapProjection = computed(() => {
     return olMap.value.getView().getProjection()
   } else return getUserProjection() ?? 'EPSG:3857'
 })
-const overlay = new Overlay({})
-overlay.setPosition(props.coordinate)
 const element = ref()
+
+const overlay = ref<Overlay>()
+
+watch(overlay, (o) => {
+  o?.setPosition(coordinate.value)
+  o?.setElement(element.value)
+})
 const coordinate = computed(() => {
   if (props.coordinate) {
     return transform(props.coordinate, props.projection, mapProjection.value)
@@ -28,12 +33,18 @@ const coordinate = computed(() => {
 })
 
 watch(coordinate, (v) => {
-  overlay.setPosition(v)
+  overlay.value?.setPosition(v)
 })
-watch(element, (v) => overlay.setElement(v))
+watch(element, (v) => overlay.value?.setElement(v))
 useOlMap(
-  (map) => map.addOverlay(overlay),
-  (map) => map.removeOverlay(overlay)
+  (map) => {
+    const o = new Overlay({})
+    overlay.value = o
+    map.addOverlay(o)
+  },
+  (map) => {
+    if (overlay.value) map.removeOverlay(overlay.value)
+  }
 )
 </script>
 
