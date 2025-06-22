@@ -1,4 +1,4 @@
-FROM node:24-slim AS build
+FROM node:22-slim AS build
 ARG PORT=9000
 ADD . /app
 WORKDIR  /app
