@@ -137,13 +137,6 @@ const layer = () => {
     </q-item>
   </q-list>
   <dgl-layer :layers="layer">
-    <dgl-map-event name="pointermove">
-      <template #default="{ feature, coordinate }">
-        <ol-popper-tooltip :coordinate="coordinate">
-          {{ feature }}
-        </ol-popper-tooltip>
-      </template>
-    </dgl-map-event>
     <dgl-map-event name="click">
       <template #default="{ feature, coordinate, pickingInfo, clear }">
         <ol-popper :coordinate="coordinate">
