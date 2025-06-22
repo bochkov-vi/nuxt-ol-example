@@ -138,7 +138,7 @@ const layer = () => {
   </q-list>
   <dgl-layer :layers="layer">
     <dgl-map-event name="click">
-      <template #default="{ feature, coordinate, pickingInfo, clear }">
+      <template #default="{ coordinate, pickingInfo, clear }">
         <ol-popper :coordinate="coordinate">
           <q-banner>
             <q-list v-if="pickingInfo?.objects">
