@@ -3,7 +3,8 @@ import MlMaptilerBright from '~/components/layers/ml-maptiler-bright.vue'
 import TestPointLayer from '~/components/layers/test-point-layer.vue'
 import OsmLayer from '~/components/layers/osm-layer.vue'
 import WebglOsmLayer from '~/components/layers/webgl-osm-layer.vue'
-import DglExampleLayer from '~/components/layers/dgl-example-layer.vue'
+import DglPointLayer from '~/components/layers/dgl-point-layer.vue'
+import DglPointClusterLayer from '~/components/layers/dgl-point-cluster-layer.vue'
 import DglJsonTileLayer from '~/components/layers/dgl-json-tile-layer.vue'
 import DglMvtTileLayer from '~/components/layers/dgl-mvt-tile-layer.vue'
 
@@ -20,15 +21,22 @@ const items = [
   {
     key: 'ol-webgl-osm',
     label: 'Ol Raster WebGl Tile Layer OSM'
-  },{
+  },
+  {
     key: 'dgl-points-example',
     label: 'Deckgl 1000000 points'
-  },{
+  },
+  {
     key: 'dgl-json-tile-layer',
     label: 'Deckgl Json Tile Layer From API'
-  },{
+  },
+  {
     key: 'dgl-mvt-tile-layer',
     label: 'Deckgl Mvt Tile Layer From API'
+  },
+  {
+    key: 'dgl-point-cluster-layer',
+    label: 'Deckgl Supercluster Point Layer'
   }
 ]
 const store = useMainStore()
@@ -39,7 +47,6 @@ function isEnabled(key: string) {
 </script>
 
 <template>
-  {{ store.layers }}
   <q-list>
     <q-item v-for="item in items" :key="item.key">
       <q-item-section>
@@ -54,9 +61,10 @@ function isEnabled(key: string) {
   <test-point-layer v-if="isEnabled('ol-point')" />
   <osm-layer v-if="isEnabled('ol-osm')" />
   <webgl-osm-layer v-if="isEnabled('ol-webgl-osm')" />
-  <dgl-example-layer v-if="isEnabled('dgl-points-example')" />
-  <dgl-json-tile-layer v-if="isEnabled('dgl-json-tile-layer')"/>
-  <dgl-mvt-tile-layer v-if="isEnabled('dgl-mvt-tile-layer')"/>
+  <dgl-point-layer v-if="isEnabled('dgl-points-example')" />
+  <dgl-json-tile-layer v-if="isEnabled('dgl-json-tile-layer')" />
+  <dgl-mvt-tile-layer v-if="isEnabled('dgl-mvt-tile-layer')" />
+  <dgl-point-cluster-layer v-if="isEnabled('dgl-point-cluster-layer')" />
 </template>
 
 <style scoped></style>

@@ -4,6 +4,7 @@ import { TileLayer } from '@deck.gl/geo-layers'
 import { GeoJsonLayer } from '@deck.gl/layers'
 import type { Feature } from 'geojson'
 import { CollisionFilterExtension } from '@deck.gl/extensions'
+import type { Color } from '@deck.gl/core'
 
 const layers = () => {
   return new TileLayer({
@@ -23,7 +24,7 @@ const layers = () => {
           pointRadiusMinPixels: 5,
           filled: true,
           getLineColor: (f) => [f.properties.r, f.properties.g, f.properties.b],
-          getFillColor: (f) => [f.properties.r, f.properties.g, f.properties.b, 50],
+          getFillColor: (f) => [f.properties.r, f.properties.g, f.properties.b, 50] as Color,
           lineWidthMinPixels: 1,
           extensions: [new CollisionFilterExtension()],
           pickable: true

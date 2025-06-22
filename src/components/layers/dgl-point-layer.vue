@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import DglLayer from '~/components/ol/deckgl/dgl-layer.vue'
-import { randomPoint } from '@turf/turf'
 import { GeoJsonLayer } from '@deck.gl/layers'
 import type { Feature } from 'geojson'
 import { CollisionFilterExtension } from '@deck.gl/extensions'
@@ -8,13 +7,9 @@ import type { Color } from '@deck.gl/core'
 import DglMapEvent from '~/components/ol/deckgl/dgl-map-event.vue'
 import { mdiClose } from '@quasar/extras/mdi-v7'
 import { FROM_CENTROID } from '~/components/ol/deckgl/use.deckgl'
+import { useRandomPoints } from '~/composables/use.random.points'
 
-const points = randomPoint(1000000)
-const randomBetween = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1))
-points.features.forEach((f) => {
-  f.properties.size = Math.floor(Math.random() * (30 - 10 + 1)) + 10
-  f.properties.color = [randomBetween(0, 255), randomBetween(0, 255), randomBetween(0, 255)]
-})
+const points = useRandomPoints(1000000)
 const layers = () => {
   return new GeoJsonLayer({
     id: 'random-points',
@@ -28,8 +23,8 @@ const layers = () => {
     stroked: true,
     pointRadiusMinPixels: 5,
     filled: true,
-    getLineColor: (f) => f.properties.color as Color,
-    getFillColor: (f) => [...(f.properties.color as [number, number, number]), 50],
+    getLineColor: (f) => [f.properties.r, f.properties.g, f.properties.b] as Color,
+    getFillColor: (f) => [f.properties.r, f.properties.g, f.properties.b, 50],
     lineWidthMinPixels: 1,
     extensions: [new CollisionFilterExtension()],
     pickable: true
@@ -74,7 +69,7 @@ const layers = () => {
     </dgl-map-event>
     <dgl-map-event name="pointermove" min-zoom="10">
       <template #default="{ coordinate, feature }">
-        <ol-popper-tooltip :coordinate="coordinate"> Кружок радиусом {{ feature?.['properties']?.['size'] }} </ol-popper-tooltip>
+        <ol-popper-tooltip :coordinate="coordinate">Кружок радиусом {{ feature?.['properties']?.['size'] }} </ol-popper-tooltip>
       </template>
     </dgl-map-event>
   </dgl-layer>

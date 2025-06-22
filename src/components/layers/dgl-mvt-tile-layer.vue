@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import DglLayer from '~/components/ol/deckgl/dgl-layer.vue'
-import { MVTLayer, TileLayer } from '@deck.gl/geo-layers'
+import { MVTLayer } from '@deck.gl/geo-layers'
 import { GeoJsonLayer } from '@deck.gl/layers'
 import type { Feature } from 'geojson'
 import { CollisionFilterExtension } from '@deck.gl/extensions'
+import type { Color } from '@deck.gl/core'
 
 const layers = () => {
   return new MVTLayer({

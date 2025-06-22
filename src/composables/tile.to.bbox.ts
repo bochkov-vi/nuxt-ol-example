@@ -28,5 +28,5 @@ export function tileToBBOX(z: number, x: number, y: number) {
   const west = pixelXToLon(topLeftPixelX, z)
   const east = pixelXToLon(bottomRightPixelX, z)
 
-  return {west, south, east, north}
+  return [west, south, east, north]
 }
