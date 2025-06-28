@@ -8,5 +8,5 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.nuxt-service
     ports:
-      - "9000:9000"
+      - "3000:3000"
     entrypoint: "node /app/.output/server/index.mjs"

@@ -4,15 +4,16 @@ import { tileToBBOX } from '~/composables/tile.to.bbox'
 import type { Feature } from 'geojson'
 import destr from 'destr'
 import type { DuckDBConnection, DuckDBValue } from '@duckdb/node-api'
-import { featureCollection } from '@turf/turf'
 
 export async function getRandomPointsFromTile(event: H3Event) {
   const { z, x, y } = zxy(event)
-  const bbox = tileToBBOX(z, x, y)
-  const db = event.context.db
+  if (isFinite(z) && isFinite(y) && isFinite(x)) {
+    const bbox = tileToBBOX(z, x, y)
+    const db = event.context.db
 
-  const features = getRandomPoints(db, bbox)
-  return features
+    const result = getRandomPoints(db, bbox)
+    return result
+  }
 }
 
 export function zxy(event: H3Event) {
@@ -26,12 +27,12 @@ export async function getRandomPointsFromBbox(event: H3Event) {
   const { bbox } = getQuery(event)
   const db = event.context.db
 
-  const features = await getRandomPoints(db, split(toString(bbox), ',').map(toNumber))
-  return featureCollection(features)
+  const { features, count } = await getRandomPoints(db, split(toString(bbox), ',').map(toNumber))
+  return { features, type: 'FeatureCollection', count: count }
 }
 
 export async function getRandomPoints(db: DuckDBConnection, bbox?: number[]) {
-  if (!bbox || isEmpty(bbox) || bbox.length !== 4 || bbox.some(n=>!isFinite(n))) {
+  if (!bbox || isEmpty(bbox) || bbox.length !== 4 || bbox.some((n) => !isFinite(n))) {
     bbox = [-180, -85, 180, 85]
   }
 
@@ -44,5 +45,5 @@ export async function getRandomPoints(db: DuckDBConnection, bbox?: number[]) {
 
   const features = Array<Feature>()
   reader.getRows().forEach((row: DuckDBValue[]) => features.push(destr<Feature>(row[0])))
-  return features
+  return { features, count: reader.currentRowCount }
 }

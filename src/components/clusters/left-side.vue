@@ -1,115 +1,118 @@
 <script setup lang="ts">
+import { debounce } from 'lodash-es'
+import useBaseClusterProps from '~/components/clusters/use.base.cluster.props'
 import { ClusterLayer } from '~/components/ol/deckgl/cluster/cluster.layer'
 import DglLayer from '~/components/ol/deckgl/dgl-layer.vue'
-import { IconLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers'
-import { debounce } from 'lodash-es'
-import DglMapEvent from '~/components/ol/deckgl/dgl-map-event.vue'
+import { ClusterTileLayer } from '~/components/ol/deckgl/cluster/cluster.tile.layer'
+import type { GeoBoundingBox } from '@deck.gl/geo-layers'
+import { ClusterMvtLayer } from '~/components/ol/deckgl/cluster/cluster.mvt.layer'
 
-type Source = 'client' | 'server-tile-json' | 'server-single-json' | 'server-mvt'
-const source = ref<Source>('client')
-const clusterRadius = ref(40)
-const radius = ref(clusterRadius.value)
-const setRadius = debounce((v) => (radius.value = v), 250)
-watch(clusterRadius, setRadius)
+const CLIENT_SIDE = 'client'
+const SERVER_SIDE = 'server'
+const SERVER_SIDE_BBOX = 'server-bbox'
+const SERVER_SIDE_MVT_ZXY = 'server-mvt'
+const SERVER_SIDE_JSON_ZXY = 'server-json-tile'
+
+type Source =
+  | typeof CLIENT_SIDE
+  | typeof SERVER_SIDE
+  | typeof SERVER_SIDE_BBOX
+  | typeof SERVER_SIDE_MVT_ZXY
+  | typeof SERVER_SIDE_JSON_ZXY
+  | typeof SERVER_SIDE_BBOX
+const source = ref<Source>(CLIENT_SIDE)
+const clusterDistance = ref(40)
+
+const debClusterDistance = ref(clusterDistance.value)
+const setRadius = debounce((v) => (debClusterDistance.value = v), 350)
+watch(clusterDistance, setRadius)
 
 const radiusScale = ref(1)
 
 const clusterZoom = ref({ min: 1, max: 16 })
-const zoom = ref(clusterZoom.value)
-const setZoom = debounce((v) => (zoom.value = v), 250)
-watch(clusterZoom, setZoom)
+
+const debClusterMaxZoom = ref(clusterZoom.value.max)
+const debClusterMinZoom = ref(clusterZoom.value.min)
+const setMinMaxClusterZom = debounce((v: { max: number; min: number }) => {
+  debClusterMaxZoom.value = v.max
+  debClusterMinZoom.value = v.min
+}, 350)
+watch(clusterZoom, setMinMaxClusterZom)
+
+const items = [
+  { label: 'Client side point generation', value: CLIENT_SIDE as Source },
+  { label: 'Server side point generation', value: SERVER_SIDE as Source },
+  { label: 'Server side json tiles by bbox', value: SERVER_SIDE_BBOX as Source },
+  { label: 'Server side json ZXY tiles', value: SERVER_SIDE_JSON_ZXY as Source },
+  { label: 'Server side mvt ZXY tiles', value: SERVER_SIDE_MVT_ZXY as Source }
+]
+const layerProps = computed(() => {
+  const { layerProps } = useBaseClusterProps({
+    radiusScale: radiusScale.value,
+    clusterDistance: debClusterDistance.value,
+    clusterMaxZoom: debClusterMaxZoom.value,
+    clusterMinZoom: debClusterMinZoom.value
+  })
+  return layerProps.value
+})
 const data = computed(() => {
   switch (source.value) {
-    case 'client':
-      return useRandomPoints(100000).features
-    default:
-      return 'api/features'
+    case CLIENT_SIDE: {
+      return useRandomPoints(1000000)
+    }
+    case SERVER_SIDE: {
+      return '/api/features'
+    }
   }
+  return undefined
 })
 const layer = () => {
-  return new ClusterLayer({
-    id: 'cluster-layer-test',
-    data: data.value,
-    clusterMaxZoom: zoom.value.max,
-    clusterMinZoom: zoom.value.min,
-    clusterRadius: radius.value,
-    updateTriggers: { radiusScale: radiusScale.value },
-    pickable: true,
-    renderClusterLayers(props) {
-      return [
-        new ScatterplotLayer({
-          id: `${props.id}-cluster-circles`,
-          data: props.data,
-          radiusUnits: 'pixels',
-          getRadius: (f) => {
-            const radius = 15 + Math.log(f.properties.point_count ?? 1) * radiusScale.value
-            return radius
-          },
-          getPosition: (p) => {
-            if (p.properties.cluster) return p.geometry.coordinates
-          },
-          stroked: true,
-          radiusMinPixels: 5,
-          filled: true,
-          pickable: true,
-          getLineColor: [0, 0, 255],
-          getFillColor: [0, 0, 255, 50],
-          lineWidthMinPixels: 1
-        }),
-        new TextLayer({
-          id: `${props.id}-cluster-labels`,
-          data: props.data,
-          getText: (f) => {
-            if (f.properties.point_count) return `${f.properties?.point_count}`
-            return ''
-          },
-          getPosition: (p) => {
-            if (p.properties.cluster) return p.geometry.coordinates
-          },
-          getSize: 10,
-          sizeUnits: 'pixels'
-        }),
-        new IconLayer({
-          id: `${props.id}-point-icons`,
-          data: props.data,
-          getPosition: (p) => {
-            if (!p.properties.cluster) {
-              return p.geometry.coordinates
-            }
-          },
-          iconAtlas: 'deck-icon/marker.svg',
-          iconMapping: 'deck-icon/marker.json',
-          getIcon: () => 'marker',
-          getSize: 20,
-          getColor: (f) => {
-            return [f.properties.r, f.properties.g, f.properties.b]
-          },
-          pickable: true
-        })
-      ]
+  switch (source.value) {
+    case CLIENT_SIDE: {
+      return new ClusterLayer(layerProps.value, { id: CLIENT_SIDE, data: data.value })
     }
-  })
+    case SERVER_SIDE: {
+      return new ClusterLayer(layerProps.value, { id: SERVER_SIDE, data: data.value })
+    }
+    case SERVER_SIDE_BBOX: {
+      //@ts-expect-error unknown TS error
+      return new ClusterTileLayer(layerProps.value, {
+        id: SERVER_SIDE_BBOX,
+        getTileData: function (props) {
+          const { north, south, west, east } = props.bbox as GeoBoundingBox
+          return $fetch(`/api/features?bbox=${west},${south},${east},${north}`)
+        }
+      })
+    }
+    case SERVER_SIDE_JSON_ZXY: {
+      //@ts-expect-error unknown TS error
+      return new ClusterTileLayer(layerProps.value, {
+        id: SERVER_SIDE_JSON_ZXY,
+        data: '/api/tiles/json/random-points/{z}/{x}/{y}'
+      })
+    }
+    case SERVER_SIDE_MVT_ZXY: {
+      //@ts-expect-error unknown TS error
+      return new ClusterMvtLayer(layerProps.value, {
+        id: SERVER_SIDE_MVT_ZXY,
+        data: '/api/tiles/mvt/random-points/{z}/{x}/{y}'
+      })
+    }
+  }
 }
 </script>
 
 <template>
   <q-list>
-    <q-item clickable @click="source = 'client'">
+    <q-item v-for="item in items" :key="item.value" clickable @click="source = item.value">
       <q-item-section>
-        <q-item-label>Client side point generation</q-item-label>
+        <q-item-label>{{ item.label }}</q-item-label>
       </q-item-section>
       <q-item-section side>
-        <q-radio v-model="source" size="dm" val="client" />
+        <q-radio v-model="source" :val="item.value" />
       </q-item-section>
     </q-item>
-    <q-item clickable @click="source = 'server-single-json'">
-      <q-item-section>
-        <q-item-label>Server side point generation</q-item-label>
-      </q-item-section>
-      <q-item-section side>
-        <q-radio v-model="source" val="server-single-json" />
-      </q-item-section>
-    </q-item>
+
     <q-item>
       <q-item-section>
         <q-item-label>Max cluster zoom:{{ clusterZoom.max }}</q-item-label>
@@ -121,9 +124,9 @@ const layer = () => {
     </q-item>
     <q-item>
       <q-item-section>
-        <q-item-label>Cluster size:{{ clusterRadius }}</q-item-label>
+        <q-item-label>Cluster distance:{{ clusterDistance }}</q-item-label>
         <q-item-label>
-          <q-slider v-model="clusterRadius" :min="10" :max="80" />
+          <q-slider v-model="clusterDistance" :min="10" :max="150" :step="10" />
         </q-item-label>
       </q-item-section>
     </q-item>
@@ -136,26 +139,7 @@ const layer = () => {
       </q-item-section>
     </q-item>
   </q-list>
-  <dgl-layer :layers="layer">
-    <dgl-map-event name="click">
-      <template #default="{ coordinate, pickingInfo, clear }">
-        <ol-popper :coordinate="coordinate">
-          <q-banner>
-            <q-list v-if="pickingInfo?.objects">
-              <q-item v-for="item in pickingInfo.objects">
-                <q-item-section>
-                  <q-item-label>{{ item }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-            <template #action>
-              <q-btn @click="clear">Закрыть</q-btn>
-            </template>
-          </q-banner>
-        </ol-popper>
-      </template>
-    </dgl-map-event>
-  </dgl-layer>
+  <dgl-layer :id="source" :layers="layer" />
 </template>
 
 <style scoped></style>
