@@ -20,7 +20,7 @@ type Source =
   | typeof SERVER_SIDE_MVT_ZXY
   | typeof SERVER_SIDE_JSON_ZXY
   | typeof SERVER_SIDE_BBOX
-const source = ref<Source>(CLIENT_SIDE)
+const source = ref<Source>()
 const clusterDistance = ref(40)
 
 const debClusterDistance = ref(clusterDistance.value)
