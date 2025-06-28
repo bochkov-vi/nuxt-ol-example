@@ -2,8 +2,8 @@ FROM node:22-slim AS build
 ARG PORT=3000
 ADD . /app
 WORKDIR  /app
-RUN npm install pnpm -g
-RUN pnpm run build
+RUN corepack enable
+RUN pnpm build
 
 FROM build
 ENV PORT=$PORT
