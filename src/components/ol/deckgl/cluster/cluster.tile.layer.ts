@@ -1,8 +1,8 @@
-import { type _Tile2DHeader, TileLayer, type TileLayerProps } from '@deck.gl/geo-layers'
+import { TileLayer, type TileLayerProps } from '@deck.gl/geo-layers'
 import type { FilterContext, Layer, LayersList, UpdateParameters } from '@deck.gl/core'
 import { ClusterLayer, type ClusterLayerProps, getGeojsonFeatures } from '~/components/ol/deckgl/cluster/cluster.layer'
-import { debounce } from 'lodash-es'
-import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
+import { debounce, omit } from 'lodash-es'
+import type { Feature, GeoJsonProperties, Geometry } from 'geojson'
 import type { GeoJsonLayerProps } from '@deck.gl/layers'
 
 export type _ClusterTileLayerProps<FeaturePropsT extends GeoJsonProperties> = ClusterLayerProps<FeaturePropsT>
@@ -13,7 +13,6 @@ export type ClusterTileLayerProps<FeaturePropsT extends GeoJsonProperties = GeoJ
 
 export class ClusterTileLayer<
   FeaturePropsT extends GeoJsonProperties = GeoJsonProperties,
-  TileData extends FeatureCollection | Feature[] = FeatureCollection | Feature[],
   ExtraPropsT extends NonNullable<unknown> = NonNullable<unknown>
 > extends TileLayer<NonNullable<unknown>, ExtraPropsT & Required<ClusterTileLayerProps>> {
   static override defaultProps = {
@@ -22,9 +21,6 @@ export class ClusterTileLayer<
     clusterMinPoints: 2,
     clusterMaxZoom: 12,
     clusterMinZoom: 0,
-    extent: [-180, -85, 180, 85],
-    maxZoom: 3,
-    minZoom: 3
   }
   static override layerName = 'ClusterTileLayer'
 
@@ -62,10 +58,11 @@ export class ClusterTileLayer<
   override renderLayers(): Layer | LayersList | null {
     const layers = super.renderLayers() as Array<Layer>
     if (this.state.showClusters) {
+      const clusterProps = omit(this.props,'data')
       layers.push(
-        new ClusterLayer(this.props, {
-          id: `${this.props.id}-clusters`,
           //@ts-expect-error TS unknown error
+        new ClusterLayer(clusterProps, {
+          id: `${this.props.id}-clusters`,
           data: this.state.features
         })
       )
@@ -82,26 +79,10 @@ export class ClusterTileLayer<
 
   getFeatures() {
     const featuers = this.state.tileset?.tiles
-      ?.filter((t) => t.isVisible)
       .map((t) => getGeojsonFeatures(t.data))
       .flat()
+      .filter((o) => !!o)
     return featuers
-  }
-
-  override renderSubLayers(
-    props: TileLayer['props'] & {
-      id: string
-      data: TileData
-      _offset: number
-      tile: _Tile2DHeader<TileData>
-    }
-  ): Layer | LayersList | null {
-    return super.renderSubLayers(props)
-  }
-
-  override _onViewportLoad() {
-    super._onViewportLoad()
-    this.setState({ dataNeedUpdate: true })
   }
 
   override shouldUpdateState({ changeFlags }: UpdateParameters<this>) {

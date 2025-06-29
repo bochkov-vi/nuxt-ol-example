@@ -2,7 +2,8 @@ import { MVTLayer, type MVTLayerProps } from '@deck.gl/geo-layers'
 import type { PointFeature } from 'supercluster'
 import type { FilterContext, Layer, LayersList, UpdateParameters } from '@deck.gl/core'
 import { ClusterLayer, type ClusterLayerProps } from '~/components/ol/deckgl/cluster/cluster.layer'
-import { assign, debounce, map } from 'lodash-es'
+import { debounce, map, omit, uniqBy } from 'lodash-es'
+import type { Feature } from 'geojson'
 
 export type _ClusterMvtLayerProps<DataT extends PointFeature<unknown>> = {} & ClusterLayerProps<DataT> & MVTLayerProps
 export type ClusterTileLayerProps<DataT extends PointFeature<unknown> = PointFeature<unknown>> = _ClusterMvtLayerProps<DataT> &
@@ -35,6 +36,7 @@ export class ClusterMvtLayer<
     this.setState({
       collectData: debounce(() => {
         const features = this.getFeatures()
+        // console.log('collect data execute')
         this.setState({ features: features, dataNeedUpdate: false })
       }, 150)
     })
@@ -44,6 +46,15 @@ export class ClusterMvtLayer<
     const isLoaded = this.state.tileset?.isLoaded
     const loadingStateChanged = this.state.isLoaded !== isLoaded
     if (this.state.dataNeedUpdate || (isLoaded && loadingStateChanged)) {
+      /*console.log(
+        'collect data call',
+        'isLoaded:',
+        isLoaded,
+        'loadingStateChanged:',
+        loadingStateChanged,
+        'dataNeedUpdate',
+        this.state.dataNeedUpdate
+      )*/
       this.setState({ dataNeedUpdate: false })
       this.state.collectData()
     }
@@ -58,9 +69,14 @@ export class ClusterMvtLayer<
   override renderLayers(): Layer | LayersList | null {
     const layers = super.renderLayers() as Array<Layer>
     if (this.state.showClusters) {
-      const props = { id: `${this.props.id}-clusters` }
-      assign(props, { data: this.state.features })
-      layers.push(new ClusterLayer(this.props, props))
+      const clusterProps = omit(this.props, 'data')
+      layers.push(
+        //@ts-expect-error TS unknown error
+        new ClusterLayer(clusterProps, {
+          id: `${this.props.id}-clusters`,
+          data: this.state.features
+        })
+      )
     }
     return layers
   }
@@ -73,17 +89,17 @@ export class ClusterMvtLayer<
   }
 
   getFeatures() {
-    const featuers = map(
-      this.state.tileset?.tiles?.filter((t) => t.isVisible),
-      'dataInWGS84'
-    ).flat()
+    const featuers = map(this.state.tileset?.tiles, 'dataInWGS84')
+      .flat()
+      .filter((o) => !!o) as Feature[]
+    const uniqueIdProperty = this.props.uniqueIdProperty
+    if (uniqueIdProperty) {
+      return uniqBy(featuers, (f) => f.properties?.[uniqueIdProperty])
+    } else {
+      return uniqBy(featuers, 'id')
+    }
 
     return featuers
-  }
-
-  override _onViewportLoad() {
-    super._onViewportLoad()
-    this.setState({ dataNeedUpdate: true })
   }
 
   override shouldUpdateState({ changeFlags }: UpdateParameters<this>) {

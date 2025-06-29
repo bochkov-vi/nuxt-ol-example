@@ -3,7 +3,8 @@ import type { FeatureCollection, Point } from 'geojson'
 
 export type PointProperties = { size: number; r: number; g: number; b: number }
 
-export function useRandomPoints(count: number) {
+export function useRandomPoints() {
+  const count = useRuntimeConfig().public.POINT_COUNT
   const points = randomPoint(count) as FeatureCollection<Point, PointProperties>
   points.features.forEach((f) => {
     f.properties.size = Math.floor(Math.random() * (30 - 10 + 1)) + 10

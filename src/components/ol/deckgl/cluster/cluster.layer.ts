@@ -59,7 +59,7 @@ export class ClusterLayer<
         minZoom: props.clusterMinZoom,
         minPoints: props.clusterMinPoints,
         radius: props.clusterDistance,
-        log: true
+        log: false
       })
       const features = getGeojsonFeatures<FeaturePropertiesT>(props.data as GeoJSON)
       if (props.getCentroid) {
@@ -121,10 +121,16 @@ export class ClusterLayer<
 
 export function getGeojsonFeatures<FeaturePropertiesT>(geojson: GeoJSON): Feature<Geometry, FeaturePropertiesT>[] {
   // If array, assume this is a list of features
+  if (!geojson) {
+    return []
+  }
+  if (geojson instanceof Promise) {
+    return []
+  }
   if (Array.isArray(geojson)) {
     return geojson
   }
-  log.assert(geojson.type, 'GeoJSON does not have type')
+  log.assert(geojson.type, `GeoJSON does not have type:${geojson}`)
   switch (geojson.type) {
     case 'Feature':
       // Wrap the feature in a 'Features' array

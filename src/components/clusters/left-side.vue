@@ -88,14 +88,24 @@ const layer = () => {
       //@ts-expect-error unknown TS error
       return new ClusterTileLayer(layerProps.value, {
         id: SERVER_SIDE_JSON_ZXY,
-        data: '/api/tiles/json/random-points/{z}/{x}/{y}'
+        data: '/api/tiles/json/random-points/{z}/{x}/{y}',
+        //фиксируем загрузку тайлов
+        maxZoom: 3,
+        minZoom: 3,
+        extent: [-180, -90, 180, 90]
       })
     }
     case SERVER_SIDE_MVT_ZXY: {
       //@ts-expect-error unknown TS error
       return new ClusterMvtLayer(layerProps.value, {
         id: SERVER_SIDE_MVT_ZXY,
-        data: '/api/tiles/mvt/random-points/{z}/{x}/{y}'
+        data: '/api/tiles/mvt/random-points/{z}/{x}/{y}',
+        //фиксируем загрузку тайлов точность сильно теряется на маленьких зумах
+        clusterMaxZoom: 10,
+        maxZoom: 12,
+        minZoom: 5,
+        uniqueIdProperty: 'id',
+        extent: [-180, -90, 180, 90]
       })
     }
   }

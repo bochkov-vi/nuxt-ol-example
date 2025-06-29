@@ -9,7 +9,7 @@ import { mdiClose } from '@quasar/extras/mdi-v7'
 import { FROM_CENTROID } from '~/components/ol/deckgl/use.deckgl'
 import { useRandomPoints } from '~/composables/use.random.points'
 
-const points = useRandomPoints(1000000)
+const points = useRandomPoints()
 const layers = () => {
   return new GeoJsonLayer({
     id: 'random-points',
