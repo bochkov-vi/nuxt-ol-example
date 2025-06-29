@@ -1,11 +1,14 @@
-import { MVTLayer, type MVTLayerProps } from '@deck.gl/geo-layers'
+import { type _TileLoadProps, MVTLayer, type MVTLayerProps } from '@deck.gl/geo-layers'
 import type { PointFeature } from 'supercluster'
 import type { FilterContext, Layer, LayersList, UpdateParameters } from '@deck.gl/core'
 import { ClusterLayer, type ClusterLayerProps } from '~/components/ol/deckgl/cluster/cluster.layer'
 import { debounce, map, omit, uniqBy } from 'lodash-es'
 import type { Feature } from 'geojson'
 
-export type _ClusterMvtLayerProps<DataT extends PointFeature<unknown>> = {} & ClusterLayerProps<DataT> & MVTLayerProps
+export type _ClusterMvtLayerProps<DataT extends PointFeature<unknown>> = {
+  onTileLoadStart?: (tile: _TileLoadProps) => void
+} & ClusterLayerProps<DataT> &
+  MVTLayerProps
 export type ClusterTileLayerProps<DataT extends PointFeature<unknown> = PointFeature<unknown>> = _ClusterMvtLayerProps<DataT> &
   MVTLayerProps &
   ClusterLayerProps<DataT>
@@ -70,11 +73,14 @@ export class ClusterMvtLayer<
     const layers = super.renderLayers() as Array<Layer>
     if (this.state.showClusters) {
       const clusterProps = omit(this.props, 'data')
+      // const zoom = Math.floor(this.context.viewport.zoom)
       layers.push(
         //@ts-expect-error TS unknown error
         new ClusterLayer(clusterProps, {
           id: `${this.props.id}-clusters`,
-          data: this.state.features
+          data: this.state.features,
+          // clusterMaxZoom: zoom + 1,
+          // clusterMinZoom: zoom - 1
         })
       )
     }
@@ -98,8 +104,15 @@ export class ClusterMvtLayer<
     } else {
       return uniqBy(featuers, 'id')
     }
+  }
 
-    return featuers
+  override async getTileData(loadProps: _TileLoadProps) {
+    this._onTileLoadStart(loadProps)
+    return super.getTileData(loadProps)
+  }
+
+  _onTileLoadStart(tile: _TileLoadProps) {
+    this.props.onTileLoadStart(tile)
   }
 
   override shouldUpdateState({ changeFlags }: UpdateParameters<this>) {

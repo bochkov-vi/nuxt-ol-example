@@ -22,14 +22,14 @@ type Source =
   | typeof SERVER_SIDE_BBOX
 const source = ref<Source>()
 const clusterDistance = ref(40)
-
+const loading = ref(0)
 const debClusterDistance = ref(clusterDistance.value)
 const setRadius = debounce((v) => (debClusterDistance.value = v), 350)
 watch(clusterDistance, setRadius)
 
 const radiusScale = ref(1)
 
-const clusterZoom = ref({ min: 1, max: 16 })
+const clusterZoom = ref({ min: 1, max: 10 })
 
 const debClusterMaxZoom = ref(clusterZoom.value.max)
 const debClusterMinZoom = ref(clusterZoom.value.min)
@@ -58,7 +58,7 @@ const layerProps = computed(() => {
 const data = computed(() => {
   switch (source.value) {
     case CLIENT_SIDE: {
-      return useRandomPoints(1000000)
+      return useRandomPoints()
     }
     case SERVER_SIDE: {
       return '/api/features'
@@ -66,13 +66,20 @@ const data = computed(() => {
   }
   return undefined
 })
+
 const layer = () => {
   switch (source.value) {
     case CLIENT_SIDE: {
-      return new ClusterLayer(layerProps.value, { id: CLIENT_SIDE, data: data.value })
+      return new ClusterLayer(layerProps.value, {
+        id: CLIENT_SIDE,
+        data: data.value,
+      })
     }
     case SERVER_SIDE: {
-      return new ClusterLayer(layerProps.value, { id: SERVER_SIDE, data: data.value })
+      return new ClusterLayer(layerProps.value, {
+        id: SERVER_SIDE,
+        data: data.value,
+      })
     }
     case SERVER_SIDE_BBOX: {
       //@ts-expect-error unknown TS error
@@ -82,6 +89,10 @@ const layer = () => {
           const { north, south, west, east } = props.bbox as GeoBoundingBox
           return $fetch(`/api/features?bbox=${west},${south},${east},${north}`)
         },
+        onTileLoadStart: () => loading.value++,
+        onTileLoad: () => loading.value--,
+        onTileError: () => loading.value--,
+        onViewportLoad: () => (loading.value = 0),
         //фиксируем загрузку тайлов на 3 зуме
         maxZoom: 3,
         minZoom: 3,
@@ -96,7 +107,11 @@ const layer = () => {
         //фиксируем загрузку тайлов на 3 зуме
         maxZoom: 3,
         minZoom: 3,
-        extent: [-180, -90, 180, 90]
+        extent: [-180, -90, 180, 90],
+        onTileLoadStart: () => loading.value++,
+        onTileLoad: () => loading.value--,
+        onTileError: () => loading.value--,
+        onViewportLoad: () => (loading.value = 0),
       })
     }
     case SERVER_SIDE_MVT_ZXY: {
@@ -104,6 +119,10 @@ const layer = () => {
       return new ClusterMvtLayer(layerProps.value, {
         id: SERVER_SIDE_MVT_ZXY,
         data: '/api/tiles/mvt/random-points/{z}/{x}/{y}',
+        onTileLoadStart: () => loading.value++,
+        onTileLoad: () => loading.value--,
+        onTileError: () => loading.value--,
+        onViewportLoad: () => (loading.value = 0),
         //фиксируем загрузку тайлов точность сильно теряется на маленьких зумах
         clusterMaxZoom: 10,
         maxZoom: 12,
@@ -117,6 +136,15 @@ const layer = () => {
 </script>
 
 <template>
+  <q-dialog :model-value="loading > 0" seamless position="top">
+    <q-banner>
+      <template #avatar>
+        <q-spinner size="lg" />
+      </template>
+      Идет загрузка
+    </q-banner>
+  </q-dialog>
+  loading:{{ loading }}
   <q-list>
     <q-item v-for="item in items" :key="item.value" clickable @click="source = item.value">
       <q-item-section>

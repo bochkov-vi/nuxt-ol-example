@@ -1,11 +1,13 @@
-import { TileLayer, type TileLayerProps } from '@deck.gl/geo-layers'
+import { type _TileLoadProps, TileLayer, type TileLayerProps } from '@deck.gl/geo-layers'
 import type { FilterContext, Layer, LayersList, UpdateParameters } from '@deck.gl/core'
 import { ClusterLayer, type ClusterLayerProps, getGeojsonFeatures } from '~/components/ol/deckgl/cluster/cluster.layer'
 import { debounce, omit } from 'lodash-es'
 import type { Feature, GeoJsonProperties, Geometry } from 'geojson'
 import type { GeoJsonLayerProps } from '@deck.gl/layers'
 
-export type _ClusterTileLayerProps<FeaturePropsT extends GeoJsonProperties> = ClusterLayerProps<FeaturePropsT>
+export type _ClusterTileLayerProps<FeaturePropsT extends GeoJsonProperties> = {
+  onTileLoadStart?: (tile: _TileLoadProps) => void
+} & ClusterLayerProps<FeaturePropsT>
 
 export type ClusterTileLayerProps<FeaturePropsT extends GeoJsonProperties = GeoJsonProperties> = _ClusterTileLayerProps<FeaturePropsT> &
   Omit<TileLayerProps, 'data'> &
@@ -20,7 +22,7 @@ export class ClusterTileLayer<
     clusterRadius: 40,
     clusterMinPoints: 2,
     clusterMaxZoom: 12,
-    clusterMinZoom: 0,
+    clusterMinZoom: 0
   }
   static override layerName = 'ClusterTileLayer'
 
@@ -58,9 +60,9 @@ export class ClusterTileLayer<
   override renderLayers(): Layer | LayersList | null {
     const layers = super.renderLayers() as Array<Layer>
     if (this.state.showClusters) {
-      const clusterProps = omit(this.props,'data')
+      const clusterProps = omit(this.props, 'data')
       layers.push(
-          //@ts-expect-error TS unknown error
+        //@ts-expect-error TS unknown error
         new ClusterLayer(clusterProps, {
           id: `${this.props.id}-clusters`,
           data: this.state.features
@@ -83,6 +85,15 @@ export class ClusterTileLayer<
       .flat()
       .filter((o) => !!o)
     return featuers
+  }
+
+  override getTileData(tile: _TileLoadProps): Promise<NonNullable<unknown>> | NonNullable<unknown> | null {
+    this._onTileLoadStart(tile)
+    return super.getTileData(tile)
+  }
+
+  _onTileLoadStart(tile: _TileLoadProps) {
+    this.props.onTileLoadStart(tile)
   }
 
   override shouldUpdateState({ changeFlags }: UpdateParameters<this>) {

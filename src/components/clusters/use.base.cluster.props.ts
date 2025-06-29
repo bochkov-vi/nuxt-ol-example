@@ -32,7 +32,7 @@ export default function (props: { radiusScale: number; clusterDistance: number; 
       pointRadiusUnits: 'pixels',
       getLineColor: (f: Feature<Point, ClusterProperties>) => {
         //только для кластеров для иконок прозрачный цвет
-        if (f.properties.cluster) return [255, 255, 255]
+        if (f.properties.cluster) return [0, 0, 255]
         else return [0, 0, 0, 0]
       },
       getFillColor: (f: Feature<Point, ClusterProperties>) => {
@@ -40,7 +40,7 @@ export default function (props: { radiusScale: number; clusterDistance: number; 
         if (f.properties.cluster) return [0, 0, 255, 50]
         else return [0, 0, 0, 0]
       },
-      lineWidthMinPixels: 3,
+      lineWidthMinPixels: 1,
       //надписи для кластеров
       getText: function (f: Feature<Point, ClusterProperties>) {
         if (f.properties.point_count) return `${f.properties.point_count}`

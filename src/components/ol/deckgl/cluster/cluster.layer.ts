@@ -59,7 +59,7 @@ export class ClusterLayer<
         minZoom: props.clusterMinZoom,
         minPoints: props.clusterMinPoints,
         radius: props.clusterDistance,
-        log: false
+        log: true
       })
       const features = getGeojsonFeatures<FeaturePropertiesT>(props.data as GeoJSON)
       if (props.getCentroid) {
@@ -70,7 +70,7 @@ export class ClusterLayer<
       this.setState({ index })
     }
     const bbox = context.viewport.getBounds()
-    if (rebuildIndex || zoom !== this.state.zoom || this.isBBoxOutOfState(bbox)) {
+    if (this.state.index && (rebuildIndex || zoom !== this.state.zoom || this.isBBoxOutOfState(bbox))) {
       const w = bbox[2] - bbox[0]
       const h = bbox[3] - bbox[1]
       bbox[0] = bbox[0] - w / 2
@@ -78,8 +78,9 @@ export class ClusterLayer<
       bbox[1] = bbox[1] - h / 2
       bbox[3] = bbox[3] + h / 2
       bbox[0] = bbox[0] - (bbox[2] - bbox[0]) / 2
-      this.setState({ clusters: this.state.index.getClusters(bbox, zoom), zoom })
+      this.setState({ clusters: this.state.index.getClusters(bbox, zoom) })
     }
+    this.setState({ zoom })
   }
 
   isBBoxOutOfState(bbox: number[]) {
