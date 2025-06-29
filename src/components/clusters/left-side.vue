@@ -81,7 +81,11 @@ const layer = () => {
         getTileData: function (props) {
           const { north, south, west, east } = props.bbox as GeoBoundingBox
           return $fetch(`/api/features?bbox=${west},${south},${east},${north}`)
-        }
+        },
+        //фиксируем загрузку тайлов на 3 зуме
+        maxZoom: 3,
+        minZoom: 3,
+        extent: [-180, -90, 180, 90]
       })
     }
     case SERVER_SIDE_JSON_ZXY: {
@@ -89,7 +93,7 @@ const layer = () => {
       return new ClusterTileLayer(layerProps.value, {
         id: SERVER_SIDE_JSON_ZXY,
         data: '/api/tiles/json/random-points/{z}/{x}/{y}',
-        //фиксируем загрузку тайлов
+        //фиксируем загрузку тайлов на 3 зуме
         maxZoom: 3,
         minZoom: 3,
         extent: [-180, -90, 180, 90]
